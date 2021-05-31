@@ -147,7 +147,7 @@ char List_delete (List *list, Data *pos)
 }
 
 /** удаление фрагмента списка  **/
-char List_deletea (List *list, List *begin, List *end)
+char List_deletea (List *list, Data *begin, Data *end)
 {
     return 0;
 }
@@ -203,7 +203,7 @@ Data* List_goend (List *list)
 }
 
 /**   перемещение к number ЭС   **/
-Data* List_gotonum (List *list)
+Data* List_gotonum (List *list, unsigned number)
 {
     return list->data;
 }
