@@ -66,7 +66,7 @@ Data*    List_getfrom (List *list, unsigned number);                    // во�
 
 /**         ОПРЕДЕЛЕНИЯ         **/
 
-/**          Структур           **/
+/**          Структуры          **/
 struct List     /**        Список        **/
 {
     Data *head;   // начало, "голова"
@@ -80,9 +80,10 @@ struct Data     /** Элемент данных списка **/
     Data *next;   // следующий ЭС
     data_t value; // значение ЭС
 };
-/**           Функций           **/
-/**     инициализация     **/
-/**       значением       **/
+
+/**           Функции           **/
+//---------инициализация-----------
+/**   инициализация значением   **/
 void List_init (List *list, data_t value)
 {
     list->data        = (Data*)malloc(sizeof(Data));  // инициализация первого ЭС
@@ -94,11 +95,14 @@ void List_init (List *list, data_t value)
     list->tail = list->data;
 }
 
-/**     инициализация     **/
-/**        массивом       **/
+/**   инициализация  массивом   **/
+void List_inita (List* list, data_t *arr)
+{
 
-/**       вставка         **/
-/**       значения        **/
+}
+
+//---------редактирование----------
+/**      вставка  значения      **/
 char List_insert (List *list, Data *pos, data_t value)
 {
     if (pos == list->head)                                   /** вставка ЭС перед его головой **/
@@ -130,5 +134,97 @@ char List_insert (List *list, Data *pos, data_t value)
     return 0;
 }
 
-/**        вставка        **/
-/**        массива        **/
+/**      вставка  массива      **/
+char List_inserta (List *list, Data *pos, data_t* arr)
+{
+    return 0;
+}
+
+/**     удаление элемента      **/
+char List_delete (List *list, Data *pos)
+{
+    return 0;
+}
+
+/** удаление фрагмента списка  **/
+char List_deletea (List *list, List *begin, List *end)
+{
+    return 0;
+}
+
+/**    перемена ЭС местами     **/
+char List_swap (List *list, Data *e1, Data *e2)
+{
+    return 0;
+}
+
+//----------копирование-----------
+/** копирование в другой список **/
+char List_copy (List *from, List *to, Data *begin, Data *end)
+{
+    return 0;
+}
+
+/**    копирование в массив    **/
+char List_copya (List *from, data_t *to, Data *begin, Data *end)
+{
+    return 0;
+}
+
+//----------перемещение-----------
+/** перемещение к СЛЕДУЮЩЕМУ ЭС **/
+Data* List_gonext (List *list)
+{
+    return list->data;
+}
+
+/** перемещение к ПРЕДЫДУЩЕМУ ЭС **/
+Data* List_goprev (List *list)
+{
+    return list->data;
+}
+
+/** перемещение к ГОЛОВЕ списка **/
+Data* List_gohead (List *list)
+{
+    return list->data;
+}
+
+/** перемещение к ХВОСТУ списка **/
+Data* List_gotail (List *list)
+{
+    return list->data;
+}
+
+/** перемещение ЗА ХВОСТ списка **/
+Data* List_goend (List *list)
+{
+    return list->data;
+}
+
+/**   перемещение к number ЭС   **/
+Data* List_gotonum (List *list)
+{
+    return list->data;
+}
+
+//-----------получение------------
+/**   получение выбранного ЭС   **/
+Data* List_this (List *list)
+{
+    return list->data;
+}
+
+/** получение номера выбранного ЭС **/
+unsigned List_thisnum (List *list)
+{
+    unsigned num = 0;
+    return num;
+}
+
+/**  получение элемента number  **/
+Data* List_getfrom (List *list, unsigned number)
+{
+    Data *ptr;
+    return ptr;
+}
