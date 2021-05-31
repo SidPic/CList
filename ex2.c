@@ -8,11 +8,14 @@ void main()
 {
     List list;
     init(&list, 'a');
-    insert(&list, list.tail->next, 'o');
-    insert(&list, list.head, 'h');
-    insert(&list, list.tail, 'l');
+    // insert(&list, list.tail->next, 'o');
+    // insert(&list, list.head, 'h');
+    // insert(&list, list.tail, 'l');
+    inserta(&list, list.head->next, L"i! H");
 
-    while (gonext(&list)) putchar(this(&list)->value);
+    for (gobegin(&list); gonext(&list);) putchar (getthis(&list)->value);
+    puts("\n");
+    for (goend(&list); goprev(&list);) putchar (getthis(&list)->value);
 
     puts("");
 }
