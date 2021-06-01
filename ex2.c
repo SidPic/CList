@@ -7,11 +7,12 @@
 void main()
 {
     List list;
-    init(&list, 'a');
-    // insert(&list, list.tail->next, 'o');
-    // insert(&list, list.head, 'h');
-    // insert(&list, list.tail, 'l');
-    inserta(&list, list.head->next, L"i! H");
+    inita(&list, L"YGUMS", LIST_STR_END);
+    insert(&list, list.tail->next, 'o');
+    insert(&list, list.head, 'h');
+    insert(&list, list.tail, 'l');
+    int arr[] = L" OK It's WORK! ";
+    inserta(&list, list.head->next, arr, LIST_STR_END);
 
     for (gobegin(&list); gonext(&list);) putchar (getthis(&list)->value);
     puts("\n");

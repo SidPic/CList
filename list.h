@@ -13,7 +13,11 @@
     ! начальный выбранный элемент - это голова списка
     ! функции редактирования и копирования при успехе возвращают 0 - иначе -1
     ! функции перемещения и получения при успехе возвращают указатель на ЭС - иначе NULL (getpos возвращает 0)
+    ! *aend свляется самым концом вставляемого массива, т.е не указателем на его последний элемент, а указателем на область после него
+    !   т.е. aend = arr[ARR_SIZE] (НЕ ARR_SIZE-1!), если массив представлен в виде строки, место указателя на конец можно
+    !       использовать NULL или LIST_STR_END
 **/
+#define LIST_STR_END NULL
                                                                          /** ******************* ДЕКЛАРАЦИИ ******************* **/
                                                                          /** ------------- ОСНОВНЫЕ ЧАСТИ СПИСКА ------------- **/
 typedef  int    data_t;                                                   /* тип значения элемента данных списка               */
@@ -22,12 +26,12 @@ typedef struct List List;                                                 /* т�
                                                                          /** -------------------- ФУНКЦИИ -------------------- **/
                                                                          /**                   инициализация                   **/
 void     List_init    (List *list, data_t value);                         /* инициализация переменной                          */
-void     List_inita   (List *list, data_t* arr );                         /* инициализация массивом                            */
+void     List_inita   (List *list, data_t* arr, data_t *aend );           /* инициализация массивом                            */
                                                                          /**                   редактирование                  **/
 char     List_delete  (List *list, Data *pos);                            /* удаление элемента  с позиции pos                  */
 char     List_deletea (List *list, Data *begin, Data  *end );             /* удаление элементов с begin по end подряд          */
 char     List_insert  (List *list, Data *pos,  data_t value);             /* вставка  элемента  на место (перед) pos           */
-char     List_inserta (List *list, Data *pos,  data_t* arr );             /* вставка  массива   на место (перед) pos           */
+char     List_inserta (List *list, Data *pos,  data_t* arr, data_t *aend);/* вставка  массива   на место (перед) pos           */
 char     List_swap    (List *list, Data *e1,    Data   *e2 );             /* перемена ЭС e1 и e2 местами                       */
                                                                          /**                    копирование                    **/
 char     List_copy    (List *from,  List  *to, Data *begin, Data *end);   /* копирование ЭС from с begin по end в список to    */
@@ -47,12 +51,13 @@ Data*    List_getthis (List *list);                                       /* в�
 unsigned List_getpos  (List *list);                                       /* возвращает позицию  выбранного элемента           */
 Data*    List_getfrom (List *list, unsigned number);                      /* возвращает элемент, находящийся на number позиции */
                                                                          /**              вспомогательные функции              **/
-void  List_inserttohead  (List* list, /* head */ data_t value);           /* вставляет элемент в голову списка                 */
-void  List_inserttotail  (List* list, /* tail */ data_t value);           /* вставляет элемент в хвост списка                  */
-void  List_inserttobody  (List* list, Data *pos, data_t value);           /* вставляет элемент (только) в тело списка          */
-void List_deletefromhead (List* list /* head */);                         /* удаляет   голову  списка                          */
-void List_deletefromtail (List* list /* tail */);                         /* удаляет   хвост   списка                          */
-void List_deletefrombody (List* list, Data *pos);                         /* удаляет   элемент (только) из тела списка         */
+void    List_baseinit    (List *list);                                    /* базовая инициализация                             */
+void  List_inserttohead  (List *list, /* head */ data_t value);           /* вставляет элемент в голову списка                 */
+void  List_inserttotail  (List *list, /* tail */ data_t value);           /* вставляет элемент в хвост списка                  */
+void  List_inserttobody  (List *list, Data *pos, data_t value);           /* вставляет элемент (только) в тело списка          */
+void List_deletefromhead (List *list /* head */);                         /* удаляет   голову  списка                          */
+void List_deletefromtail (List *list /* tail */);                         /* удаляет   хвост   списка                          */
+void List_deletefrombody (List *list, Data *pos);                         /* удаляет   элемент (только) из тела списка         */
                                                                          /** ------------ Укорочение имён функций ------------ **/
 #ifdef SHORT_LIST_NAMES
     #define init     List_init
@@ -77,6 +82,7 @@ void List_deletefrombody (List* list, Data *pos);                         /* у�
     #define getpos   List_getpos
     #define getfrom  List_getfrom
 
+    #define    baseinit    List_baseinit
     #define  inserttohead  List_inserttohead
     #define  inserttotail  List_inserttotail
     #define deletefromhead List_deletefromhead
@@ -100,17 +106,14 @@ struct Data {                                                            /**    
                                                                          /**                    ИНИЦИЛИЗАЦИЯ                   **/
 void List_init (List *list, data_t value)                                /**              инициализация переменной             **/
 {
-    list->head        = (Data*)malloc(sizeof(Data));                      /* инициализация первого ЭС                          */
-    list->tail        = list->head;                                       /* первый ЭС явлется как хвостом, так и головой, т.е.*/
-    list->head->prev  = (Data*)malloc(sizeof(Data));                      /* предыдущий элемент отсутствует (но зарезервирован)*/
-    list->tail->next  = (Data*)malloc(sizeof(Data));                      /*    и следующий то же                              */
+    List_baseinit (list);                                                 /* базовая инициализация                             */
     list->head->value = value;                                            /* присваивание значения ЭС                          */
-    list->data        = list->head;                                       /* выбранный элемент (по умолчанию) - голова списка  */
 }
 
-void List_inita (List* list, data_t *arr)                                /**               инициализация массивом              **/
+void List_inita (List* list, data_t *arr, data_t *aend)                  /**               инициализация массивом              **/
 {
-
+    List_baseinit (list);                                                 /* базовая инициализация                             */
+    List_inserta (list, list->tail, arr, aend);                           /* вставка массива                                   */
 }
 
                                                                          /**                   РЕДАКТИРОВАНИЕ                  **/
@@ -122,9 +125,18 @@ char List_insert (List *list, Data *pos, data_t value)                   /**    
                   else             return -1;                             /* позиция указана некорректно                       */
                  return 0;
 }
-char List_inserta (List *list, Data *pos, data_t* arr)                   /**                  вставка массива                  **/
+char List_inserta (List *list, Data *pos, data_t* arr, data_t *aend)     /**                  вставка массива                  **/
 {
-    //if (pos == list->head)
+    if (    pos == list->head    ) {                                      /* вставка                                           */
+        List_inserttohead (list, *arr++);                                 /*         головного элемента                        */
+    }                                                                     /*                                                   */
+    if ( pos == list->tail->next ) { while (aend ? arr != aend : *arr)    /* вставка                                           */
+        List_inserttotail (list, *arr++);                                 /*         в конец списка                            */
+    }                                                                     /*                                                   */
+    if (           pos           ) { while (aend ? arr != aend : *arr)    /* вставка                                           */
+        List_inserttobody (list, pos, *arr++);                            /*         в тело списка                             */
+    }                                                                     /*                                                   */
+    else return -1;                                                       /* позиция указана некорректно                       */
 
     return 0;
 }
@@ -252,6 +264,14 @@ Data* List_getfrom (List *list, unsigned number)
     return ptr;
 }
                                                                          /** ------------ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ------------ **/
+void List_baseinit (List *list)                                          /**                 базовая инициализация             **/
+{
+    list->head        = (Data*)malloc(sizeof(Data));                      /* инициализация первого ЭС                          */
+    list->tail        = list->head;                                       /* первый ЭС явлется как хвостом, так и головой, т.е.*/
+    list->head->prev  = (Data*)malloc(sizeof(Data));                      /* предыдущий элемент отсутствует (но зарезервирован)*/
+    list->tail->next  = (Data*)malloc(sizeof(Data));                      /*    и следующий то же                              */
+    list->data        = list->head;                                       /* выбранный элемент (по умолчанию) - голова списка  */
+}
 void List_inserttohead (List *list, data_t value)                        /**          вставка элемента в голову списка         **/
 {
     list->head->prev->prev  = (Data*)malloc(sizeof(Data));                /* ЭС становится головным          | begin - н<- с   */
