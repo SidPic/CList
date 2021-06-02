@@ -13,9 +13,10 @@
     ! начальный выбранный элемент - это голова списка
     ! функции редактирования и копирования при успехе возвращают 0 - иначе -1
     ! функции перемещения и получения при успехе возвращают указатель на ЭС - иначе NULL (getpos возвращает 0)
-    ! *aend свляется самым концом вставляемого массива, т.е не указателем на его последний элемент, а указателем на область после него
-    !   т.е. aend = arr[ARR_SIZE] (НЕ ARR_SIZE-1!), если массив представлен в виде строки, место указателя на конец можно
-    !       использовать NULL или LIST_STR_END
+    ! *aend или *toe является самым концом массива, т.е не указателем на его последний элемент,
+    !    а указателем на область после него т.е. aend = arr[ARR_SIZE] (НЕ ARR_SIZE-1!), на конец можно,
+    !        если массив представлен в виде строки, место указателя использовать NULL или LIST_STR_END
+    !           В СЛУЧАЕ С *toe ДЛЯ КОНЦА ИСПОЛЬЗУЙТЕ to+sizeof(to) !
 **/
 #define LIST_STR_END NULL
                                                                          /** ******************* ДЕКЛАРАЦИИ ******************* **/
@@ -34,8 +35,8 @@ char     List_insert  (List *list, Data *pos,  data_t value);             /* в�
 char     List_inserta (List *list, Data *pos,  data_t* arr, data_t *aend);/* вставка  массива   на место (перед) pos           */
 char     List_swap    (List *list, Data *e1,    Data   *e2 );             /* перемена ЭС e1 и e2 местами                       */
                                                                          /**                    копирование                    **/
-char     List_copy    (List *from,  List  *to, Data *begin, Data *end);   /* копирование ЭС from с begin по end в список to    */
-char     List_copya   (List *from, data_t *to, Data *begin, Data *end);   /* копирование ЭC from с begin по end в массив to    */
+char     List_copy    (List *from, Data *begin, Data *end, List *to);     /* копирование ЭС from с begin по end в список to    */
+char     List_copya   (List *from, Data *begin, Data *end, data_t *to, data_t *toe);/*копирование ЭC from с begin по end в массив to*/
                                                                          /**                    перемещение                    **/
 Data*    List_gonext  (List *list);                                       /* выбирает следующий  ЭС                            */
 Data*    List_goprev  (List *list);                                       /* выбирает предыдущий ЭС                            */
@@ -126,6 +127,7 @@ char List_insert (List *list, Data *pos, data_t value)                   /**    
                   else             return -1;                             /* позиция указана некорректно                       */
                  return 0;
 }
+
 char List_inserta (List *list, Data *pos, data_t* arr, data_t *aend)     /**                  вставка массива                  **/
 {
     if ( pos == list->head->prev ) return -1;                             /* нельзя использовать точку begin для записи!       */
@@ -141,6 +143,7 @@ char List_inserta (List *list, Data *pos, data_t* arr, data_t *aend)     /**    
     else return -1;                                                       /* позиция указана некорректно                       */
     return 0;
 }
+
 char List_delete (List *list, Data *pos)                                 /**                 удаление элемента                 **/
 {
     if (pos == list->head->prev || pos == list->tail->next) return -1;    /* нельзя удалять точки begin и end!                 */
@@ -150,6 +153,7 @@ char List_delete (List *list, Data *pos)                                 /**    
              else          return -1;                                     /* позиция указана некорректно                       */
             return 0;
 }
+
 char List_deletea (List *list, Data *begin, Data *end)                   /**             удаление фрагмента списка             **/
 {
     if ( begin == list->head->prev || begin == list->tail->next)return -1;/* нельзя удалять                                    */
@@ -160,7 +164,7 @@ char List_deletea (List *list, Data *begin, Data *end)                   /**    
     {                                                                     /*                                                   */
         char head = 0, tail = 0;                                          /*                                                   */
         if (begin == list->head) begin = begin->next, head = 1;           /* голову и                                          */
-        if (end == list->tail) end = end->prev, tail = 1;                 /*          хвост пока не трогаем                    */
+        if ( end == list->tail ) end = end->prev, tail = 1;                 /*          хвост пока не трогаем                    */
                                                                           /*                                (иначе потеряем)   */
         do {                                                              /*                                                   */
             begin = begin->next;                                          /* идём вперёд,                                      */
@@ -175,114 +179,139 @@ char List_deletea (List *list, Data *begin, Data *end)                   /**    
     return 0;
 }
 
-/**    перемена ЭС местами     **/
-char List_swap (List *list, Data *e1, Data *e2)
+char List_swap (List *list, Data *e1, Data *e2)                          /**              перемена e1 и e2 местами             **/
 {
+    if (e1 == list->head->prev || e1 == list->tail->next) return -1;      /* оставьте эти точки в покое,                        */
+    if (e2 == list->head->prev || e2 == list->tail->next) return -1;      /*                             не нужны они вам!      */
+    if (e1 && e2)                                                         /*                                                    */
+    {
+        data_t tmp = e1->value;                                           /* просто меняем                                      */
+        e1->value  = e2->value;                                           /*               местами значения                     */
+        e2->value  = tmp;                                                 /*                                указанных элементов */
+    }
+    else return -1;                                                       /* позиция указана некорректно                        */
     return 0;
 }
 
-//----------копирование-----------
-/** копирование в другой список **/
-char List_copy (List *from, List *to, Data *begin, Data *end)
+                                                                         /**                    КОПИРОВАНИЕ                     **/
+char List_copy (List *from, Data *begin, Data *end, List *to)            /**        копирование в другой список (в конец)       **/
 {
+    if ( begin == from->head->prev || begin == from->tail->next)return -1;/* не                                                 */
+    if (  end  == from->head->prev ||  end  == from->tail->next)return -1;/*   льзя!                                            */
+    if (begin && end && to->tail)
+    {                                                                     /*                                                    */
+        while (begin != end)                                              /* собственно                                         */
+        {
+            inserttotail (to, begin->value), begin = begin->next;         /*            просто вставляем значения               */
+        }
+        inserttotail (to, begin->value);                                  /*                                      ЭС from в to  */
+    }
+    else return -1;                                                       /* позиция указана некорректно                        */
     return 0;
 }
 
-/**    копирование в массив    **/
-char List_copya (List *from, data_t *to, Data *begin, Data *end)
+char List_copya (List *from, Data *begin, Data *end, data_t *to, data_t *toe)/**           копирование в массив                 **/
 {
+    if ( begin == from->head->prev || begin == from->tail->next)return -1;/* не                                                 */
+    if (  end  == from->head->prev ||  end  == from->tail->next)return -1;/*   льзя!                                            */
+    if (begin && end)
+    {                                                                     /*                                                    */
+        while (to != toe && begin != end)                                 /* собственно                                         */
+        {                                                                 /*            просто                                  */
+            *to++ = begin->value;                                         /*                   записываем                       */
+            begin = begin->next;                                          /*                              значения ЭС           */
+        }                                                                 /*                                          в         */
+        *to = begin->value;                                               /*                                            массив  */
+    }
+    else return -1;                                                       /* позиция указана некорректно                        */
     return 0;
 }
 
-//----------перемещение-----------
-/** перемещение к СЛЕДУЮЩЕМУ ЭС **/
-Data* List_gonext (List *list)
+                                                                         /**                    ПЕРЕМЕЩЕНИЕ                     **/
+Data* List_gonext (List *list)                                           /**                  к следующему ЭС                   **/
 {
-    if ( list->data == list->head->prev ) list->data = list->head; else   // выбранный элемент находится за головой
-    if (        list->data->next        ) list->data = list->data->next;  // выбранный элемент определён
-                      else                return NULL;                    // элемент, следующий за выбранным не существует
-
+    if ( list->data == list->head->prev ) list->data = list->head; else   /* если выбранный элемент находится за головой        */
+    if (        list->data->next        ) list->data = list->data->next;  /* если выбранный элемент определён                   */
+                      else                return NULL;                    /* если элемент, следующий за выбранным не существует */
     return list->data;
 }
 
-/** перемещение к ПРЕДЫДУЩЕМУ ЭС **/
-Data* List_goprev (List *list)
+Data* List_goprev (List *list)                                           /**                  к предыдущему ЭС                  **/
 {
-    if ( list->data == list->tail->next ) list->data = list->tail; else   // выбранный элемент находится за хвостом
-    if (     list->data->prev->prev     ) list->data = list->data->prev;  // выбранный элемент не является головным
-                     else                 return NULL;                    // элемент, предшествующий выбранному не существует
-
+    if ( list->data == list->tail->next ) list->data = list->tail; else   /* выбранный элемент находится за хвостом             */
+    if (     list->data->prev->prev     ) list->data = list->data->prev;  /* выбранный элемент не является головным             */
+                     else                 return NULL;                    /* элемент, предшествующий выбранному не существует   */
     return list->data;
 }
 
-/** перемещение к ГОЛОВЕ списка **/
-Data* List_gohead (List *list)
+Data* List_gohead (List *list)                                           /**                   к голове списка                  **/
 {
     list->data = list->head;
     return list->data;
 }
 
-/** перемещение к ХВОСТУ списка **/
-Data* List_gotail (List *list)
+Data* List_gotail (List *list)                                           /**                   к хвосту списка                  **/
 {
     list->data = list->tail;
     return list->data;
 }
 
-/** перемещение ЗА ГОЛОВУ списка **/
-Data* List_gobegin (List *list)
+Data* List_gobegin (List *list)                                          /**                  за голову списка                  **/
 {
     list->data = list->head->prev;
     return list->data;
 }
 
-/** перемещение ЗА ХВОСТ списка **/
-Data* List_goend (List *list)
+Data* List_goend (List *list)                                            /**                   за хвост списка                  **/
 {
     list->data = list->tail->next;
     return list->data;
 }
 
-/**   перемещение к number ЭС   **/
-Data* List_gotonum (List *list, unsigned number)
+Data* List_gotonum (List *list, unsigned number)                         /**                     к number ЭС                    **/
 {
+    if (number < 1) return NULL;
+    list->data = list->head;                                              /* возврат к головной позиции                         */
+    for (unsigned i = 1; i < number && list->data->next; ++i)             /*  нумерация нацинается с 1                          */
+        list->data = list->data->next;                                    /* двигаемся, куда надо                               */
+
     return list->data;
 }
 
-//-----------получение------------
-/**   получение предыдущего ЭС  **/
-Data* List_getprev (List *list)
+                                                                         /**                      ПОЛУЧЕНИЕ                     **/
+Data* List_getprev (List *list)                                          /**                    предыдущий ЭС                   **/
 {
-    if ( list->data == list->tail->next ) return list->tail;        // выбранный элемент находится за хвостом
-    if (     list->data->prev->prev     ) return list->data->prev;  // выбранный элемент не является головным
-                      else                return NULL;              // элемент, предшествующий выбранному не существует
+    if ( list->data == list->tail->next ) return list->tail;              /* выбранный элемент находится за хвостом             */
+    if (     list->data->prev->prev     ) return list->data->prev;        /* выбранный элемент не является головным             */
+                      else                return NULL;                    /* элемент, предшествующий выбранному не существует   */
 }
 
-/**   получение следующего ЭС   **/
-Data* List_getnext (List *list)
+Data* List_getnext (List *list)                                          /**                    следующий ЭС                    **/
 {
-    if ( list->data == list->head->prev ) return list->head;        // выбранный элемент находится за головой
-    if (        list->data->next        ) return list->data->next;  // выбранный элемент определён
-                      else                return NULL;              // элемент, следующий за выбранным не существует
+    if ( list->data == list->head->prev ) return list->head;              /* выбранный элемент находится за головой             */
+    if (        list->data->next        ) return list->data->next;        /* выбранный элемент определён                        */
+                      else                return NULL;                    /* элемент, следующий за выбранным не существует      */
 }
 
-/**   получение выбранного ЭС   **/
-Data* List_getthis (List *list)
+Data* List_getthis (List *list)                                          /**           получение выбранного элемента            **/
 {
     return list->data != list->head->prev ? list->data : NULL;
 }
 
-/** получение номера выбранного ЭС **/
-unsigned List_getpos (List *list)
+unsigned List_getpos (List *list)                                        /**         получение номера выбранного элемента       **/
 {
-    unsigned num = 0;
+    if (list->data == list->head->prev) return 0;                         /* это место не для пользователя                       */
+    unsigned num = 1;
+    for (Data *ptr = list->head; ptr != list->data; ptr = ptr->next)      /* идём куда надо,                                     */
+        ++num;                                                            /*                 считаем                             */
     return num;
 }
 
-/**  получение элемента number  **/
-Data* List_getfrom (List *list, unsigned number)
+Data* List_getfrom (List *list, unsigned number)                         /**    получение элемента по его положению в списке    **/
 {
-    Data *ptr;
+    if (number < 1) return NULL;
+    Data *ptr = list->head;
+    for (unsigned i = 1; i < number && ptr->next; ++i) ptr = ptr->next;
     return ptr;
 }
                                                                          /** ------------ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ------------ **/
