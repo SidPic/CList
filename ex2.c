@@ -13,7 +13,7 @@ void main()
     insert(&list, list.tail, 'l');
     int arr[] = L" OK It's WORK! ";
     inserta(&list, list.head->next, arr, LIST_STR_END);
-    deletea (&list, list.head->next, list.head->next->next);
+    deletea (&list, list.head->next, list.tail);
 
     for (gobegin(&list); gonext(&list);) putchar (getthis(&list)->value);
     puts("\n");

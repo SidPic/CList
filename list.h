@@ -153,26 +153,23 @@ char List_delete (List *list, Data *pos)                                 /**    
 char List_deletea (List *list, Data *begin, Data *end)                   /**             удаление фрагмента списка             **/
 {
     if ( begin == list->head->prev || begin == list->tail->next)return -1;/* нельзя удалять                                    */
-    if (  end  == list->head->prev ||  end  == list->tail->next)return -1;/*                точки begin и end спсика!          */
+    if (  end  == list->head->prev ||  end  == list->tail->next)return -1;/*                точки begin и end списка!          */
     if ( list->head == list->tail ) list->head->value = 0;     else       /* если список состоит из одного Э, тот не удаляется */
     if (       begin == end       ) List_delete (list, begin); else       /* и так понятно                                     */
     if (       begin && end       )                                       /*                                                   */
     {                                                                     /*                                                   */
         char head = 0, tail = 0;                                          /*                                                   */
-        if (begin == list->head) head = 1;           /* голову и                                          */
+        if (begin == list->head) begin = begin->next, head = 1;           /* голову и                                          */
         if (end == list->tail) end = end->prev, tail = 1;                 /*          хвост пока не трогаем                    */
-                                                                          // /*                                                   */
-
-        begin = begin->next;
-        while (begin != end) {                                            /* пока не дошли до конца,                           */
-            begin = begin->next;                                          /*                         идём туда,                */
-            List_deletefrombody (list, begin->prev);                            /*                                    делитим...     */
-        }                                                                 /*                                                   */
-       List_delete (list, begin->prev);
-       if (tail) List_delete (list, begin);
+                                                                          /*                                (иначе потеряем)   */
+        do {                                                              /*                                                   */
+            begin = begin->next;                                          /* идём вперёд,                                      */
+            List_deletefrombody (list, begin->prev);                      /*              делитим                              */
+        } while (begin != end);                                           /*                      пока до конца не дойдём..    */
+        List_delete (list, begin);                                        /* дошли, ещё делитим                                */
                                                                           /*                                                   */
-        if (head) List_deletefromhead (list);              /* если надо, голова                                 */
-        if (tail) List_deletefromtail (list);                /*                   и хвост удаляются               */
+        if (head) List_deletefromhead (list);                             /* если надо, голова                                 */
+        if (tail) List_deletefromtail (list);                             /*                   и хвост удаляются               */
     }                                                                     /*                                                   */
     else return -1;                                                       /* позиция указана некорректно                       */
     return 0;
