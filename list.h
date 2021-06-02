@@ -119,6 +119,7 @@ void List_inita (List* list, data_t *arr, data_t *aend)                  /**    
                                                                          /**                   РЕДАКТИРОВАНИЕ                  **/
 char List_insert (List *list, Data *pos, data_t value)                   /**                  вставка элемента                 **/
 {
+    if ( pos == list->head->prev ) return -1;                             /* нельзя использовать точку begin для записи!       */
     if (    pos == list->head    ) List_inserttohead (list, value); else  /* вставка элемента в ГОЛОВУ списка                  */
     if ( pos == list->tail->next ) List_inserttotail (list, value); else  /* вставка элемента в КОНЕЦ списка                   */
     if (           pos           ) List_inserttobody (list, pos, value);  /* вставка элемента в ТЕЛО списка                    */
@@ -127,6 +128,7 @@ char List_insert (List *list, Data *pos, data_t value)                   /**    
 }
 char List_inserta (List *list, Data *pos, data_t* arr, data_t *aend)     /**                  вставка массива                  **/
 {
+    if ( pos == list->head->prev ) return -1;                             /* нельзя использовать точку begin для записи!       */
     if (    pos == list->head    ) {                                      /* вставка                                           */
         List_inserttohead (list, *arr++);                                 /*         головного элемента                        */
     }                                                                     /*                                                   */
@@ -137,19 +139,42 @@ char List_inserta (List *list, Data *pos, data_t* arr, data_t *aend)     /**    
         List_inserttobody (list, pos, *arr++);                            /*         в тело списка                             */
     }                                                                     /*                                                   */
     else return -1;                                                       /* позиция указана некорректно                       */
-
     return 0;
 }
-
-/**     удаление элемента      **/
-char List_delete (List *list, Data *pos)
+char List_delete (List *list, Data *pos)                                 /**                 удаление элемента                 **/
 {
-    return 0;
+    if (pos == list->head->prev || pos == list->tail->next) return -1;    /* нельзя удалять точки begin и end!                 */
+    if (pos == list->head) List_deletefromhead (list); else               /* удаление головного ЭС                             */
+    if (pos == list->tail) List_deletefromtail (list); else               /* удаление хвостового ЭС                            */
+    if (      pos        ) List_deletefrombody (list, pos);               /* удаление элемента из тела списка                  */
+             else          return -1;                                     /* позиция указана некорректно                       */
+            return 0;
 }
-
-/** удаление фрагмента списка  **/
-char List_deletea (List *list, Data *begin, Data *end)
+char List_deletea (List *list, Data *begin, Data *end)                   /**             удаление фрагмента списка             **/
 {
+    if ( begin == list->head->prev || begin == list->tail->next)return -1;/* нельзя удалять                                    */
+    if (  end  == list->head->prev ||  end  == list->tail->next)return -1;/*                точки begin и end спсика!          */
+    if ( list->head == list->tail ) list->head->value = 0;     else       /* если список состоит из одного Э, тот не удаляется */
+    if (       begin == end       ) List_delete (list, begin); else       /* и так понятно                                     */
+    if (       begin && end       )                                       /*                                                   */
+    {                                                                     /*                                                   */
+        char head = 0, tail = 0;                                          /*                                                   */
+        if (begin == list->head) head = 1;           /* голову и                                          */
+        if (end == list->tail) end = end->prev, tail = 1;                 /*          хвост пока не трогаем                    */
+                                                                          // /*                                                   */
+
+        begin = begin->next;
+        while (begin != end) {                                            /* пока не дошли до конца,                           */
+            begin = begin->next;                                          /*                         идём туда,                */
+            List_deletefrombody (list, begin->prev);                            /*                                    делитим...     */
+        }                                                                 /*                                                   */
+       List_delete (list, begin->prev);
+       if (tail) List_delete (list, begin);
+                                                                          /*                                                   */
+        if (head) List_deletefromhead (list);              /* если надо, голова                                 */
+        if (tail) List_deletefromtail (list);                /*                   и хвост удаляются               */
+    }                                                                     /*                                                   */
+    else return -1;                                                       /* позиция указана некорректно                       */
     return 0;
 }
 
@@ -247,7 +272,7 @@ Data* List_getnext (List *list)
 /**   получение выбранного ЭС   **/
 Data* List_getthis (List *list)
 {
-    return list->data;
+    return list->data != list->head->prev ? list->data : NULL;
 }
 
 /** получение номера выбранного ЭС **/
@@ -264,7 +289,7 @@ Data* List_getfrom (List *list, unsigned number)
     return ptr;
 }
                                                                          /** ------------ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ------------ **/
-void List_baseinit (List *list)                                          /**                 базовая инициализация             **/
+void List_baseinit (List *list)                                          /**               базовая инициализация               **/
 {
     list->head        = (Data*)malloc(sizeof(Data));                      /* инициализация первого ЭС                          */
     list->tail        = list->head;                                       /* первый ЭС явлется как хвостом, так и головой, т.е.*/
